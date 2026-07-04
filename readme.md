@@ -186,7 +186,43 @@ type BidAdvisory = {
 - [ ] **0:45** Next lot heats up; the advisory references your last call — *"you held firm under €240 last time — suggesting €220 here."* It learns your taste
 - [ ] **0:55** Close: *"Ten tabs and a gut feeling, replaced by one calm decision under the hammer."*
 
-## Rules & compliance (don't get disqualified)
+## Deployed on SUSE
+
+Gavel runs on **SUSE Rancher** and **Application Collection** — the same curated stack used at RAISE Paris — with our copilot agent on in-cluster LLM inference (Ollama), a simulated live-auction feed over SSE, and a public HTTPS demo URL that still works if venue WiFi dies.
+
+- Rancher Desktop / k3s local cluster (or remote Rancher-managed cluster)
+- SUSE Application Collection for curated workloads (PostgreSQL, Redis, Ollama, ingress)
+- MCP-driven deployment from Cursor
+- Human-in-the-loop compliance: simulated auction feed, no autonomous bidding
+
+### Infra quick start
+
+```bash
+# Cluster setup — see docs/infra-setup.md
+kubectl apply -f k8s/namespace.yaml
+
+# Local dev
+pnpm install
+cp .env.example .env.local
+pnpm dev
+```
+
+### API contract
+
+See [docs/env-contract.md](docs/env-contract.md) for routes, env vars, and teammate integration surfaces.
+
+### Demo day
+
+See [docs/demo-day.md](docs/demo-day.md) for pre-demo commands, fallback tiers, and troubleshooting.
+
+### PR flow
+
+1. Branch from `main` / `master`: `cursor/<descriptive-name>-5364`
+2. Open PR; CI must pass lint + build + Docker
+3. Merge to `main` triggers deploy to `gavel` namespace
+
+---
+
 
 - [ ] Repo is **public**
 - [ ] **Everything** built during the event — no reused code (in particular, no reusing any existing monitoring/auction bots)

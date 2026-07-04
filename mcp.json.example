@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "application-collection": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@suse/application-collection-mcp"
+      ],
+      "env": {
+        "KUBECONFIG": "${HOME}/.kube/config",
+        "RANCHER_URL": "https://rancher.local",
+        "RANCHER_TOKEN": "<from-init.sh-or-mentors>"
+      }
+    }
+  }
+}

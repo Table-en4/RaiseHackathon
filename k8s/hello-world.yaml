@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hello-world
+  namespace: gavel
+  labels:
+    app: hello-world
+spec:
+  containers:
+    - name: hello
+      image: rancher/hello-world:latest
+      ports:
+        - containerPort: 80

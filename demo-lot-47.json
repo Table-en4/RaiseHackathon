@@ -1,0 +1,17 @@
+{
+  "id": "demo-lot-47-heat",
+  "ts": 0,
+  "lotId": "47",
+  "title": "Faturan sphere — 52mm, honey amber",
+  "platform": "drouot",
+  "currentBid": 145,
+  "currency": "EUR",
+  "bidCount": 12,
+  "closesInSec": 75,
+  "category": "phenolic-resin",
+  "attributes": {
+    "material": "faturan",
+    "diameter": "52mm",
+    "read": "catalin-like translucency"
+  }
+}

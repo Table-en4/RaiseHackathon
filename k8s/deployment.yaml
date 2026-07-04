@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gavel
+  namespace: gavel
+  labels:
+    app: gavel
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gavel
+  template:
+    metadata:
+      labels:
+        app: gavel
+    spec:
+      containers:
+        - name: gavel
+          image: ghcr.io/table-en4/raisehackathon/gavel:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: gavel-config
+            - secretRef:
+                name: gavel-secrets
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
