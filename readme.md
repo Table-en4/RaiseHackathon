@@ -186,45 +186,39 @@ type BidAdvisory = {
 - [ ] **0:45** Next lot heats up; the advisory references your last call — *"you held firm under €240 last time — suggesting €220 here."* It learns your taste
 - [ ] **0:55** Close: *"Ten tabs and a gut feeling, replaced by one calm decision under the hammer."*
 
-## Deployed on SUSE
+## Infra (SUSE)
 
-Gavel runs on **SUSE Rancher** and **Application Collection** — the same curated stack used at RAISE Paris — with our copilot agent on in-cluster LLM inference (Ollama), a simulated live-auction feed over SSE, and a public HTTPS demo URL that still works if venue WiFi dies.
+Infrastructure only in this repo — cluster foundation for the hackathon. Application code is owned by frontend/backend teammates separately.
 
 - Rancher Desktop / k3s local cluster (or remote Rancher-managed cluster)
 - SUSE Application Collection for curated workloads (PostgreSQL, Redis, Ollama, ingress)
 - MCP-driven deployment from Cursor
-- Human-in-the-loop compliance: simulated auction feed, no autonomous bidding
+- Sample workload (`nginxdemos/hello`) proves public HTTPS — not the Gavel app
 
-### Infra quick start
+### Quick start
 
 ```bash
-# Cluster setup — see docs/infra-setup.md
+# Cluster bootstrap — see docs/infra-setup.md
 kubectl apply -f k8s/namespace.yaml
-
-# Local dev
-pnpm install
-cp .env.example .env.local
-pnpm dev
+./scripts/deploy-all.sh
+./scripts/verify-cluster.sh
 ```
 
-### API contract
+### Docs
 
-See [docs/env-contract.md](docs/env-contract.md) for routes, env vars, and teammate integration surfaces.
-
-### Demo day
-
-See [docs/demo-day.md](docs/demo-day.md) for pre-demo commands, fallback tiers, and troubleshooting.
+- [docs/infra-setup.md](docs/infra-setup.md) — Paris `init.sh` + manual bootstrap
+- [docs/deploy-runbook.md](docs/deploy-runbook.md) — deploy, verify, troubleshooting
+- [docs/mcp-ops.md](docs/mcp-ops.md) — Application Collection MCP commands
 
 ### PR flow
 
 1. Branch from `main` / `master`: `cursor/<descriptive-name>-5364`
-2. Open PR; CI must pass lint + build + Docker
-3. Merge to `main` triggers deploy to `gavel` namespace
+2. Open PR; CI validates k8s manifests
+3. Merge to `main` triggers infra deploy via `deploy-infra.yml`
 
 ---
 
-
-- [ ] Repo is **public**
+## Rules & compliance (don't get disqualified)
 - [ ] **Everything** built during the event — no reused code (in particular, no reusing any existing monitoring/auction bots)
 - [ ] **Human-in-the-loop bidding only** — no autonomous bot or scraping against real platforms
 - [ ] **Not** a dashboard-as-main-feature — the advisory + the human's tap is the product

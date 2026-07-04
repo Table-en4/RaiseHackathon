@@ -25,6 +25,6 @@ spec:
             - name: TUNNEL_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: gavel-secrets
+                  name: gavel-infra-secrets
                   key: CLOUDFLARE_TUNNEL_TOKEN
                   optional: true

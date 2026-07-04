@@ -1,0 +1,48 @@
+name: Deploy Infrastructure
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Validate manifests (dry-run)
+        run: |
+          kubectl apply --dry-run=client -f k8s/namespace.yaml
+          kubectl apply --dry-run=client -f k8s/samples/
+          kubectl apply --dry-run=client -f k8s/platform/
+          kubectl apply --dry-run=client -f k8s/ai/
+          kubectl apply --dry-run=client -f k8s/secrets/secret.yaml.example
+          kubectl apply --dry-run=client -f k8s/secrets/pull-secret.yaml.example
+
+  deploy:
+    needs: validate
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" > ~/.kube/config
+
+      - name: Deploy infrastructure
+        run: |
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/samples/nginx-demo.yaml
+          kubectl apply -f k8s/platform/ingress.yaml
+          kubectl apply -f k8s/ai/ollama.yaml
+          kubectl rollout status deployment/nginx-demo -n gavel --timeout=120s

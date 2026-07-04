@@ -1,11 +1,10 @@
 # Gavel — SUSE / Rancher / Application Collection Setup
 
-Commands only. Run on a machine with Rancher Desktop or a Rancher-managed cluster.
+Commands only. Infra foundation — no application code in this repo.
 
 ## Prerequisites
 
 ```bash
-# macOS / Linux
 docker --version
 helm version
 kubectl version --client
@@ -34,22 +33,20 @@ Deploy image pull secret to app namespace:
 ## Option B — Manual bootstrap (if Paris repo unavailable)
 
 ```bash
-# Start Rancher Desktop with Kubernetes enabled (GUI or headless)
-# Wait until kubectl works:
-kubectl get nodes
-# Expected: node Ready
+# Start Rancher Desktop with Kubernetes enabled
+kubectl get nodes   # Expected: Ready
 
-# Log into hackathon registry (credentials from SUSE mentors)
+# Registry auth (credentials from SUSE mentors)
 docker login <hackathon-registry>
 helm registry login <hackathon-registry>
 
-# Create namespaces
+# Namespaces
 kubectl apply -f k8s/namespace.yaml
 
-# Install Application Collection extension (Rancher UI or CLI per mentor docs)
-# Generate MCP config for Cursor — see mcp.json.example in repo root
+# Application Collection extension (Rancher UI or mentor docs)
+# MCP config — see mcp.json.example
 
-# Deploy pull secret (replace with mentor-provided credentials)
+# Pull secret (replace with mentor credentials)
 kubectl create secret docker-registry gavel-pull-secret \
   --namespace=gavel \
   --docker-server=<registry> \
@@ -60,53 +57,70 @@ kubectl create secret docker-registry gavel-pull-secret \
 ## Verify cluster foundation
 
 ```bash
+./scripts/verify-cluster.sh
+```
+
+Or manually:
+
+```bash
 kubectl get nodes
 kubectl get ns gavel gavel-ai
-kubectl apply -f k8s/hello-world.yaml
-kubectl get pods -n gavel
-kubectl delete pod hello-world -n gavel
+kubectl apply -f k8s/samples/hello-world-pod.yaml
+kubectl wait --for=condition=Ready pod/hello-world -n gavel --timeout=60s
+kubectl delete -f k8s/samples/hello-world-pod.yaml
 ```
 
 ## Application Collection — test chart pull
 
 ```bash
-helm search repo application-collection  # after adding AC helm repo per mentor docs
+helm search repo application-collection
 # Or via Rancher UI: Apps > Application Collection
 ```
 
 ## MCP configuration
 
-Copy and customize:
-
 ```bash
 cp mcp.json.example .cursor/mcp.json
-# If auth fails, run init.sh --mcp-proxy and point MCP at the proxy URL
+# If auth fails: ./init.sh --mcp-proxy
 ```
 
 ## Namespaces
 
-| Namespace   | Workloads                          |
-| ----------- | ---------------------------------- |
-| `gavel`     | Next.js app, ingress, secrets      |
-| `gavel-ai`  | Ollama, optional Redis/PostgreSQL  |
+| Namespace  | Workloads |
+| ---------- | --------- |
+| `gavel`    | Sample nginx workload, ingress, secrets |
+| `gavel-ai` | Ollama, optional Redis/PostgreSQL (via Application Collection) |
 
-## Deploy Gavel app (after Phase 1 image build)
+## Deploy infrastructure
 
 ```bash
-kubectl apply -f k8s/namespace.yaml
-kubectl apply -f k8s/configmap.yaml
-# Create secret from local env (never commit real values):
-kubectl create secret generic gavel-secrets \
+./scripts/deploy-all.sh
+```
+
+Ordered apply:
+
+1. `k8s/namespace.yaml`
+2. `k8s/samples/nginx-demo.yaml` — public sample image (`nginxdemos/hello`)
+3. `k8s/platform/ingress.yaml` — HTTPS routing
+4. `k8s/ai/ollama.yaml` — optional in-cluster LLM
+5. `k8s/platform/cloudflared.yaml` — optional tunnel (`DEPLOY_TUNNEL=true`)
+
+Secrets (never commit real values):
+
+```bash
+# From templates:
+kubectl apply -f k8s/secrets/pull-secret.yaml      # after filling in registry creds
+kubectl create secret generic gavel-infra-secrets \
   --namespace=gavel \
-  --from-env-file=.env.production
-kubectl apply -f k8s/deployment.yaml
-kubectl apply -f k8s/service.yaml
-kubectl apply -f k8s/ingress.yaml
+  --from-literal=CLOUDFLARE_TUNNEL_TOKEN=<token>
 ```
 
 ## Local fallback (venue WiFi down)
 
 ```bash
-kubectl apply -f k8s/cloudflared.yaml   # Cloudflare Tunnel to local k3s
-# Or: pnpm dev with .env.local mirroring k8s secrets
+DEPLOY_TUNNEL=true ./scripts/deploy-all.sh
+# Or port-forward:
+kubectl port-forward svc/nginx-demo 8080:80 -n gavel
 ```
+
+See [deploy-runbook.md](deploy-runbook.md) for troubleshooting.
